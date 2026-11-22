@@ -1,0 +1,24 @@
+<?php
+// Пример для новой инсталляции. Не копируйте чужие реальные секреты.
+$MainName = 'DashBoard';
+$MobileName = 'DashBoard';
+$system_id = 'pbx1';
+$internal_prefix = '';
+$callback_window_hours = 24;
+$ClientNameLookup_iiko = false;
+$iiko_config = array();
+$dsn = 'mysql:host=127.0.0.1;dbname=YOUR_DB_NAME;charset=utf8mb4';
+$dbUser = 'YOUR_DB_USER';
+$dbPass = 'CHANGE_ME_DB_PASSWORD';
+$did_array = array();
+$queue_array = array();
+$showIncomingSummary = true;
+$call_agents = array('1701' => 'Хостес 1', '1702' => 'Хостес 2');
+$call_ami_host = '127.0.0.1';
+$call_ami_port = 5038;
+$call_ami_user = 'YOUR_AMI_USER';
+$call_ami_secret = 'CHANGE_ME_AMI_SECRET';
+$call_local_prefix = '';
+$api_auth_enabled = true;
+$api_tokens = array('CHANGE_ME_LONG_RANDOM_BEARER_TOKEN');
+$api_cors_origins = array();

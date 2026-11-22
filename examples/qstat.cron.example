@@ -1,0 +1,20 @@
+# /etc/cron.d/qstat — пример, замените SERVICE_ACCOUNT_PATH и USER
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+* * * * * root /usr/bin/flock -n /tmp/qstat_queue.cron.lock /usr/bin/php /var/www/html/qstat/sync_queue_report-new.php >> /var/log/qstat-queue.log 2>&1
+* * * * * root /bin/bash -c 'sleep 15; /usr/bin/flock -n /tmp/qstat_queue.cron.lock /usr/bin/php /var/www/html/qstat/sync_queue_report-new.php >> /var/log/qstat-queue.log 2>&1'
+* * * * * root /bin/bash -c 'sleep 30; /usr/bin/flock -n /tmp/qstat_queue.cron.lock /usr/bin/php /var/www/html/qstat/sync_queue_report-new.php >> /var/log/qstat-queue.log 2>&1'
+* * * * * root /bin/bash -c 'sleep 45; /usr/bin/flock -n /tmp/qstat_queue.cron.lock /usr/bin/php /var/www/html/qstat/sync_queue_report-new.php >> /var/log/qstat-queue.log 2>&1'
+* * * * * root /usr/bin/flock -n /tmp/qstat_callbacks.cron.lock /usr/bin/php /var/www/html/qstat/sync_callbacks-new.php >> /var/log/qstat-callbacks.log 2>&1
+* * * * * root /bin/bash -c 'sleep 15; /usr/bin/flock -n /tmp/qstat_callbacks.cron.lock /usr/bin/php /var/www/html/qstat/sync_callbacks-new.php >> /var/log/qstat-callbacks.log 2>&1'
+* * * * * root /bin/bash -c 'sleep 30; /usr/bin/flock -n /tmp/qstat_callbacks.cron.lock /usr/bin/php /var/www/html/qstat/sync_callbacks-new.php >> /var/log/qstat-callbacks.log 2>&1'
+* * * * * root /bin/bash -c 'sleep 45; /usr/bin/flock -n /tmp/qstat_callbacks.cron.lock /usr/bin/php /var/www/html/qstat/sync_callbacks-new.php >> /var/log/qstat-callbacks.log 2>&1'
+* * * * * root /usr/bin/flock -n /tmp/qstat_outbound.cron.lock /usr/bin/php /var/www/html/qstat/sync_outbound_calls-new.php >> /var/log/qstat-outbound.log 2>&1
+* * * * * root /bin/bash -c 'sleep 15; /usr/bin/flock -n /tmp/qstat_outbound.cron.lock /usr/bin/php /var/www/html/qstat/sync_outbound_calls-new.php >> /var/log/qstat-outbound.log 2>&1'
+* * * * * root /bin/bash -c 'sleep 30; /usr/bin/flock -n /tmp/qstat_outbound.cron.lock /usr/bin/php /var/www/html/qstat/sync_outbound_calls-new.php >> /var/log/qstat-outbound.log 2>&1'
+* * * * * root /bin/bash -c 'sleep 45; /usr/bin/flock -n /tmp/qstat_outbound.cron.lock /usr/bin/php /var/www/html/qstat/sync_outbound_calls-new.php >> /var/log/qstat-outbound.log 2>&1'
+* * * * * root /usr/bin/flock -n /tmp/qstat_push.cron.lock /usr/bin/env QSTAT_FIREBASE_SERVICE_ACCOUNT=/etc/qstat/firebase-service-account.json /usr/bin/php /var/www/html/qstat/push_worker.php >> /var/log/qstat-push.log 2>&1
+* * * * * root /bin/bash -c 'sleep 15; /usr/bin/flock -n /tmp/qstat_push.cron.lock /usr/bin/env QSTAT_FIREBASE_SERVICE_ACCOUNT=/etc/qstat/firebase-service-account.json /usr/bin/php /var/www/html/qstat/push_worker.php >> /var/log/qstat-push.log 2>&1'
+* * * * * root /bin/bash -c 'sleep 30; /usr/bin/flock -n /tmp/qstat_push.cron.lock /usr/bin/env QSTAT_FIREBASE_SERVICE_ACCOUNT=/etc/qstat/firebase-service-account.json /usr/bin/php /var/www/html/qstat/push_worker.php >> /var/log/qstat-push.log 2>&1'
+* * * * * root /bin/bash -c 'sleep 45; /usr/bin/flock -n /tmp/qstat_push.cron.lock /usr/bin/env QSTAT_FIREBASE_SERVICE_ACCOUNT=/etc/qstat/firebase-service-account.json /usr/bin/php /var/www/html/qstat/push_worker.php >> /var/log/qstat-push.log 2>&1'
+30 3 * * * root /usr/bin/php /var/www/html/qstat/cleanup_old_records.php --execute >> /var/log/qstat-cleanup.log 2>&1

@@ -1,0 +1,10 @@
+plugins { id 'com.android.application'; id 'com.google.gms.google-services' }
+android {
+    namespace 'com.freepbx.qstat'
+    compileSdk 35
+    defaultConfig { applicationId 'com.freepbx.qstat'; minSdk 26; targetSdk 34; versionCode 24; versionName '2.4' }
+}
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    implementation 'com.google.firebase:firebase-messaging'
+}

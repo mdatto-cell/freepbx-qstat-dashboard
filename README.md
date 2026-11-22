@@ -1,36 +1,77 @@
-# DashBoard for FreePBX
+# DashBoard for FreePBX — документация проекта
 
-DashBoard — мобильная и серверная система статистики звонков очередей FreePBX / Asterisk: входящие, исходящие, пропущенные, обратные звонки, запись разговоров и уведомления о пропущенных вызовах.
+**Основание:** предоставленные архивы `DashBoard-iOS-v1.6-FCM-Push-source(1).zip`, `FreePBXQStat-Android-v2.4-source-and-server(1).zip`, `qstat.zip` (22 ноября 2026 г.). Это **документация и черновик подготовки GitHub**, а не опубликованный или готовый к публичной выкладке репозиторий.
 
-## Компоненты
+DashBoard отображает статистику звонков очередей FreePBX/Asterisk, входящие/исходящие вызовы и статусы обратных звонков; позволяет воспроизводить доступные записи и инициировать исходящий звонок через выбранного агента. Пропущенные звонки отправляются на Android и iOS через Firebase Cloud Messaging; iOS получает их через APNs. Нажатие на уведомление открывает входящие пропущенные вызовы.
 
-- **Android v2.4** — Java, Firebase Cloud Messaging, выбор агента для звонка клиенту.
-- **iOS v1.6** — SwiftUI, Firebase Messaging и Apple Push Notification service (APNs).
-- **FreePBX QStat** — PHP 5.6, Asterisk AMI, MariaDB/MySQL, синхронизация входящих, исходящих и callbacks.
-- **Push** — `cc_push_devices`, `cc_push_events`, `cc_push_deliveries`, FCM HTTP v1 и APNs.
+## Состав и проверенные версии
 
-## Исходники и документация
+| Компонент | Проверено в архиве |
+|---|---|
+| Android | Java, `com.freepbx.qstat`, версия 2.4 / code 24, minSdk 26, targetSdk 34, Firebase Messaging |
+| iOS | SwiftUI, `ru.freepbx.qstat.ios`, версия 1.6 / build 6, iOS 17+, Firebase SPM |
+| Сервер | PHP 5.6-совместимый код, PDO, cURL, OpenSSL, MySQL/MariaDB, FreePBX/Asterisk, AMI |
+| База данных | `cc_calls_report`, `cc_etl_state`, `cc_outbound_calls`, `cc_push_devices`, `cc_push_events`, `cc_push_deliveries` |
+| Веб-панель | `index.php`, `dashboard.css` |
 
-Комплект подготовлен к публичной публикации с исключением секретов: `qstat.inc.php`, Firebase service account JSON, APNs `.p8`, ключей подписи и локальных конфигураций. **Исходные файлы пока загружаются в этот репозиторий отдельно от README.**
+## Изменения этой редакции
 
-Документация включает установку сервера и MariaDB, cron 15 секунд, настройку Firebase для Android/iOS, Apple Developer, сборки Xcode и Android Studio и устранение ошибок.
+- Добавлены шесть SQL-схем в `database/schema/` без `DROP TABLE`; они предназначены для первичной установки и **не** обновляют существующие таблицы.
+- Существующий рабочий cron на FreePBX **не изменяется**. Отдельно приложен альтернативный пример `examples/qstat.cron.example`.
+- В этой версии вызовы `call.php` и `recordings.php` сохраняются без изменений. Перенос в `api.php` с использованием его авторизации — задача следующего релиза.
 
-### Установка
+## Быстрый маршрут установки
 
-1. Скопировать `examples/qstat.inc.php.example` в локальный `server/qstat.inc.php` и заполнить своими значениями.
-2. Установить SQL из `database/schema/` на **новую** БД; использовать резервную копию перед любой операцией на действующем сервере. В установочных файлах нет `DROP TABLE`.
-3. Разместить PHP-скрипты QStat на сервере, настроить права, cron и FCM service account вне web-root.
-4. Для Android скачать свой `google-services.json`; для iOS — `GoogleService-Info.plist`. Настроить APNs Authentication Key в Firebase Cloud Messaging.
-5. Проверить регистрацию устройства и отправку тестового push.
+1. Прочитайте [аудит безопасности](audits/SECURITY-REVIEW.md) — исходный `qstat.inc.php` нельзя публиковать.
+2. Разверните сервер по [инструкции](docs/installation.md) на тестовом стенде.
+3. Настройте Firebase FCM / [Android](docs/firebase-android.md) / [Apple Developer + iOS](docs/firebase-apple-ios.md).
+4. Соберите приложения: [Android и iOS](docs/mobile-builds.md).
+5. Проверьте регистрацию устройств и push по [диагностике](docs/troubleshooting.md).
+6. Перед GitHub выполните [проверку публикации](docs/github-publication.md).
 
-## Совместимость
+## Архитектура
 
-Исходные идентификаторы сохранены: Android `com.freepbx.qstat`, iOS `ru.freepbx.qstat.ios`.
+```text
+Asterisk queuelog + cdr
+      | sync_queue_report-new.php / sync_callbacks-new.php / sync_outbound_calls-new.php
+      v
+cc_calls_report + cc_outbound_calls + cc_etl_state
+      |                          |
+      | api.php                  | missed_no_callback
+      v                          v
+Android / iOS              cc_push_events
+      |                          | push_worker.php
+      | register_push            v
+      +--> cc_push_devices --> cc_push_deliveries --> FCM HTTP v1
+                                              |             |
+                                           Android       APNs -> iOS
 
-## Текущие ограничения
+Мобильный звонок: Android/iOS -> call.php -> Asterisk AMI Originate
+Прослушивание: Android/iOS -> recordings.php (план: перенести в api.php в следующей версии)
+```
 
-В действующей версии `call.php` и `recordings.php` используются как отдельные endpoints. Их перенос в авторизованный API запланирован для следующего релиза. Никогда не публикуйте реальные учетные данные или ключи.
+**Замечание:** исходный `qstat.zip` включает рабочую конфигурацию; намеренно **не вложен** в этот архив. Приватные ключи, токены и пароли сюда не копировались. Данные `.plist` и `google-services.json` обычно идентифицируют Firebase-проект и не являются сервисными приватными ключами, однако перед релизом всё равно нужно проверить конфигурацию и домены.
 
-## Статус
 
-Репозиторий открыт; публикация полного набора исходников и документации выполняется поэтапно.
+## Source layout
+
+- `android/`: DashBoard Android v2.4, original package `com.freepbx.qstat`.
+- `ios/`: DashBoard iOS v1.6, original bundle ID `ru.freepbx.qstat.ios`.
+- `server/`: current FreePBX QStat PHP scripts (PHP 5.6 compatible).
+- `database/schema/`: installation-only SQL scripts with **no `DROP TABLE` commands**. Do not apply over production without backup.
+- `docs/`: installation, Firebase, APNs / Apple Developer and troubleshooting guides.
+- `examples/`: sample QStat configuration and optional 15-second cron alternative.
+
+### Before building
+
+1. Copy `examples/qstat.inc.php.example` to `server/qstat.inc.php` and set local credentials (never commit that file).
+2. Download **your own** `google-services.json` from Firebase into `android/app/`.
+3. Download **your own** `GoogleService-Info.plist` into `ios/FreePBXQStat/`.
+4. Store Firebase service-account credentials **outside** the web root.
+5. Keep current cron schedule as deployed; `examples/qstat.cron.example` is an optional alternative.
+
+The current releases retain `call.php` and `recordings.php`. Moving those routes behind authenticated `api.php` is a **future version** task.
+
+### Security notice
+
+The original server configuration, service-account secrets, and signing keys are not included. Prior deployment credentials should be rotated if they were ever shared or committed publicly.
