@@ -1,0 +1,31 @@
+name: Publish DashBoard v1.0.0
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v1.0.0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release sources
+        uses: actions/checkout@v4
+      - name: Publish release if absent
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            echo "Release v1.0.0 already exists; no changes made."
+          else
+            gh release create v1.0.0 \
+              --target "${GITHUB_SHA}" \
+              --title "DashBoard for FreePBX v1.0.0" \
+              --notes-file RELEASE_NOTES_v1.0.0.md \
+              --latest
+          fi
