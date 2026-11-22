@@ -15,7 +15,7 @@ if (!$lockFp || !flock($lockFp, LOCK_EX | LOCK_NB)) {
 $config = [
     'dsn'                   => 'mysql:host=127.0.0.1;dbname=asteriskcdrdb;charset=utf8mb4',
     'user'                  => 'freepbxuser',
-    'password'              => 'w1WbnSxbkdcl',
+    'password'              => 'YOUR_DB_PASSWORD',
     'internal_prefix'       => '17',
     'callback_window_hours' => 24,
     'batch'                 => 500,
